@@ -1,0 +1,70 @@
+
+# Trabalho Prático – Exercícios em Go
+
+## Observações Importantes
+
+### ⏰ Prazo de Entrega
+- **Data limite:** 26/09/2025 (sexta-feira)
+- **Horário:** até 23:59h (FIRME)
+
+### 📤 Instruções de Entrega
+- Gerar um único arquivo (ex: zip) com toda a implementação
+- Não enviar links – apenas arquivos compactados
+- Entrega exclusivamente pelo SIGAA
+- O SIGAA aceita apenas um único arquivo por entrega
+
+### 👥 Trabalho em Equipe
+- Apenas um membro da equipe deve realizar a entrega
+- A lista completa das equipes está no final do documento
+
+### 💻 Requisitos Técnicos
+- Todas as implementações devem ser desenvolvidas na linguagem **Go**
+
+---
+
+## Exercício para a Equipe 01
+
+### 🎯 Descrição do Problema
+
+Implemente uma aplicação de reservas com múltiplos clientes (threads/goroutines) tentando reservar recursos limitados (ex: assentos, quartos, mesas).
+
+### 📋 Requisitos
+
+- Sistema de reservas concorrente
+- Múltiplos clientes acessando simultaneamente
+- Recursos com quantidade limitada
+- Controle de concorrência adequado
+- Prevenção de condições de corrida
+
+---
+
+## Exemplo de Execução
+
+```bash
+go run main.go
+```
+
+---
+
+## Estrutura Recomendada
+
+```text
+Atividade01/
+	main.go
+	README
+```
+
+---
+
+## Dicas
+
+- Utilize goroutines para simular clientes concorrentes
+- Use mutex ou operações atômicas para controlar acesso aos recursos
+- Implemente logs para identificar conflitos e reservas negadas
+
+---
+
+## Autor
+
+Lucas Monterazo
+
