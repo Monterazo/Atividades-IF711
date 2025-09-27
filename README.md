@@ -4,7 +4,7 @@ Repositório dedicado às atividades da disciplina **F711 - Programação Concor
 Aqui estarão registradas todas as implementações e resoluções feitas por:  
 
 - 👨‍💻 **Lucas **  
-- 👨‍💻 **Mikael [Sobrenome]**  
+- 👨‍💻 **Mikael Cavalcanti**  
 
 ---
 
