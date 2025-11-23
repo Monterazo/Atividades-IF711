@@ -2,7 +2,6 @@
 
 ## 📌 **Visão Geral**
 
-Este projeto implementa dois estilos de comunicação distribuída, seguindo as instruções fornecidas no arquivo instrucao.txt e a especificação funcional do arquivo especificacao.txt:
 
 **Arquitetura MOM (Message-Oriented Middleware)**
 - Baseada em MQTT
