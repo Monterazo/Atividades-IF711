@@ -113,8 +113,6 @@ Dispatcher coordena exatamente estes passos.
 
 ## 📡 **4. Arquitetura MOM (MQTT)**
 
-Baseada no arquivo MQTT.txt com melhorias estruturais.
-
 ### 📊 **4.1 Diagrama**
 ```
 Cliente
