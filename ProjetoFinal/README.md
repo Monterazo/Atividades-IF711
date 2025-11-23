@@ -2,18 +2,52 @@
 
 ## 📌 **Visão Geral**
 
+Este projeto implementa dois estilos de comunicação distribuída, seguindo as instruções fornecidas no arquivo especificacao.txt:
 
 **Arquitetura MOM (Message-Oriented Middleware)**
 - Baseada em MQTT
 - Responsável por comunicação assíncrona, baseada em mensagens.
 
 **Arquitetura RPC (Remote Procedure Call)**
-- Baseada em gRPC
+- Baseada em gRPC ✅ **(IMPLEMENTADO)**
 - Comunicação síncrona e tipada entre processos distribuídos.
 
 O objetivo é implementar uma calculadora distribuída capaz de avaliar expressões matemáticas complexas enviadas pelo cliente. As expressões são quebradas em etapas pelo Dispatcher e enviadas aos servidores especializados (Add, Sub, Mult, Div).
 
 O projeto exige ainda um relatório comparativo de desempenho entre as duas abordagens.
+
+---
+
+## 🚀 **Quick Start - gRPC**
+
+### Pré-requisitos
+- Go 1.21+
+- Protocol Buffers Compiler (protoc)
+- Git
+
+### Instalação e Execução Rápida
+
+```bash
+# 1. Instalar protoc (Windows - PowerShell como Admin)
+powershell -ExecutionPolicy Bypass -File scripts\install_protoc.ps1
+
+# 2. Instalar plugins Go
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+# 3. Compilar o projeto
+powershell -ExecutionPolicy Bypass -File scripts\build.ps1
+
+# 4. Executar o sistema
+powershell -ExecutionPolicy Bypass -File scripts\run.ps1
+```
+
+### Documentação Detalhada
+- 📖 [SETUP.md](SETUP.md) - Configuração completa do ambiente
+- 📋 [INSTRUCOES.md](INSTRUCOES.md) - Instruções detalhadas de execução
+- 📡 [especificacao.txt](especificacao.txt) - Especificação do projeto
+
+---
 
 ## 🧱 **1. Arquitetura Lógica Comum (Core Layer)**
 

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package calculator;
+
+option go_package = "github.com/Monterazo/Atividades-IF711/ProjetoFinal/proto";
+
+// Serviço Cliente → Dispatcher
+service CalculatorService {
+  rpc Calculate(ExpressionRequest) returns (ExpressionResponse);
+}
+
+// Serviço Dispatcher → Servidores
+service OperationService {
+  rpc Execute(OperationRequest) returns (OperationResponse);
+}
+
+// Mensagens
+message ExpressionRequest {
+  string expression_id = 1;
+  string expression = 2;
+  int64 deadline_ms = 3;
+}
+
+message ExpressionResponse {
+  string expression_id = 1;
+  double result = 2;
+  ErrorInfo error = 3;
+}
+
+message OperationRequest {
+  string expression_id = 1;
+  string step_id = 2;
+  string operation = 3;
+  repeated double numbers = 4;
+  int64 deadline_ms = 5;
+}
+
+message OperationResponse {
+  string expression_id = 1;
+  string step_id = 2;
+  double result = 3;
+  ErrorInfo error = 4;
+}
+
+message ErrorInfo {
+  string code = 1;
+  string message = 2;
+}
