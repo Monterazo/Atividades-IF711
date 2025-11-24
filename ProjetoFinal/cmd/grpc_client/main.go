@@ -19,18 +19,21 @@ const (
 )
 
 func main() {
-	log.Println("Cliente Calculadora gRPC")
-	log.Println("========================")
+	// Gera ID único para este cliente
+	clientID := fmt.Sprintf("CLIENT-%d", time.Now().Unix()%10000)
+
+	log.Printf("[%s] Cliente Calculadora gRPC", clientID)
+	log.Printf("[%s] ========================", clientID)
 
 	// Conecta ao dispatcher
 	conn, err := grpc.Dial(dispatcherAddr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(5*time.Second))
 	if err != nil {
-		log.Fatalf("Falha ao conectar ao dispatcher: %v", err)
+		log.Fatalf("[%s] Falha ao conectar ao dispatcher: %v", clientID, err)
 	}
 	defer conn.Close()
 
 	client := pb.NewCalculatorServiceClient(conn)
-	log.Printf("Conectado ao dispatcher em %s\n", dispatcherAddr)
+	log.Printf("[%s] Conectado ao dispatcher em %s\n", clientID, dispatcherAddr)
 
 	// Loop de interação
 	scanner := bufio.NewScanner(os.Stdin)
@@ -57,7 +60,7 @@ func main() {
 
 		// Prepara requisição
 		expressionCounter++
-		expressionID := fmt.Sprintf("expr_%d", expressionCounter)
+		expressionID := fmt.Sprintf("%s_expr_%d", clientID, expressionCounter)
 
 		req := &pb.ExpressionRequest{
 			ExpressionId: expressionID,
@@ -68,7 +71,7 @@ func main() {
 		// Cria contexto com timeout
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(defaultTimeout)*time.Millisecond)
 
-		log.Printf("Enviando expressão: %s", input)
+		log.Printf("[%s] Enviando expressão: %s (ID: %s)", clientID, input, expressionID)
 
 		// Envia requisição
 		startTime := time.Now()
@@ -78,18 +81,18 @@ func main() {
 
 		if err != nil {
 			fmt.Printf("❌ Erro ao calcular: %v\n", err)
-			log.Printf("Erro: %v", err)
+			log.Printf("[%s] Erro: %v", clientID, err)
 			continue
 		}
 
 		// Processa resposta
 		if resp.Error != nil {
 			fmt.Printf("❌ Erro: [%s] %s\n", resp.Error.Code, resp.Error.Message)
-			log.Printf("Erro retornado: [%s] %s", resp.Error.Code, resp.Error.Message)
+			log.Printf("[%s] Erro retornado: [%s] %s", clientID, resp.Error.Code, resp.Error.Message)
 		} else {
 			fmt.Printf("✅ Resultado: %s = %f\n", input, resp.Result)
 			fmt.Printf("⏱️  Tempo de execução: %v\n", duration)
-			log.Printf("Resultado: %f (tempo: %v)", resp.Result, duration)
+			log.Printf("[%s] Resultado: %f (tempo: %v)", clientID, resp.Result, duration)
 		}
 	}
 

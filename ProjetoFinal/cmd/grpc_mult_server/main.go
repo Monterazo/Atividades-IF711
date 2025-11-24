@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"strings"
 
 	pb "github.com/Monterazo/Atividades-IF711/ProjetoFinal/proto"
 	grpcOps "github.com/Monterazo/Atividades-IF711/ProjetoFinal/internal/grpc"
@@ -30,11 +31,19 @@ func NewOperationServer(op string) *OperationServer {
 
 // Execute executa a operação
 func (s *OperationServer) Execute(ctx context.Context, req *pb.OperationRequest) (*pb.OperationResponse, error) {
-	log.Printf("Recebida operação: %s(%v) [Step: %s]", req.Operation, req.Numbers, req.StepId)
+	// Extrai clientID do expressionID
+	clientID := "UNKNOWN"
+	parts := strings.Split(req.ExpressionId, "_expr_")
+	if len(parts) > 0 {
+		clientID = parts[0]
+	}
+
+	serverName := strings.ToUpper(s.operation)
+	log.Printf("[%s] [%s] Recebida operação: %s(%v) [Step: %s]", serverName, clientID, req.Operation, req.Numbers, req.StepId)
 
 	// Valida operação
 	if req.Operation != s.operation {
-		log.Printf("Operação inválida: esperado %s, recebido %s", s.operation, req.Operation)
+		log.Printf("[%s] [%s] Operação inválida: esperado %s, recebido %s", serverName, clientID, s.operation, req.Operation)
 		return &pb.OperationResponse{
 			ExpressionId: req.ExpressionId,
 			StepId:       req.StepId,
@@ -48,7 +57,7 @@ func (s *OperationServer) Execute(ctx context.Context, req *pb.OperationRequest)
 	// Executa operação
 	result, err := grpcOps.ExecuteOperation(req.Operation, req.Numbers)
 	if err != nil {
-		log.Printf("Erro ao executar operação: %v", err)
+		log.Printf("[%s] [%s] Erro ao executar operação: %v", serverName, clientID, err)
 		errorCode := "EXECUTION_ERROR"
 		if err.Error() == "divisão por zero" {
 			errorCode = "DIV_BY_ZERO"
@@ -63,7 +72,7 @@ func (s *OperationServer) Execute(ctx context.Context, req *pb.OperationRequest)
 		}, nil
 	}
 
-	log.Printf("Operação executada com sucesso: %f", result)
+	log.Printf("[%s] [%s] Operação executada com sucesso: %f", serverName, clientID, result)
 	return &pb.OperationResponse{
 		ExpressionId: req.ExpressionId,
 		StepId:       req.StepId,
@@ -72,19 +81,20 @@ func (s *OperationServer) Execute(ctx context.Context, req *pb.OperationRequest)
 }
 
 func main() {
-	log.Printf("Iniciando servidor de operação: %s", operation)
+	serverName := strings.ToUpper(operation)
+	log.Printf("[%s] Iniciando servidor de operação: %s", serverName, operation)
 
 	// Cria listener
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("Falha ao criar listener: %v", err)
+		log.Fatalf("[%s] Falha ao criar listener: %v", serverName, err)
 	}
 
 	// Cria servidor gRPC
 	grpcServer := grpc.NewServer()
 	pb.RegisterOperationServiceServer(grpcServer, NewOperationServer(operation))
 
-	log.Printf("Servidor %s escutando em %s", operation, port)
+	log.Printf("[%s] Servidor %s escutando em %s", serverName, operation, port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Falha ao servir: %v", err)
 	}

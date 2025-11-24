@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	pb "github.com/Monterazo/Atividades-IF711/ProjetoFinal/proto"
@@ -55,12 +56,19 @@ func (s *DispatcherServer) connectToServers() error {
 
 // Calculate processa uma expressão matemática
 func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequest) (*pb.ExpressionResponse, error) {
-	log.Printf("Recebida expressão: %s (ID: %s)", req.Expression, req.ExpressionId)
+	// Extrai o clientID do expressionID (formato: CLIENT-XXXX_expr_Y)
+	clientID := "UNKNOWN"
+	parts := strings.Split(req.ExpressionId, "_expr_")
+	if len(parts) > 0 {
+		clientID = parts[0]
+	}
+
+	log.Printf("[DISPATCHER] [%s] Recebida expressão: %s (ID: %s)", clientID, req.Expression, req.ExpressionId)
 
 	// Parse da expressão
 	steps, rpnStr, err := s.parser.ParseWithRPN(req.Expression)
 	if err != nil {
-		log.Printf("Erro ao fazer parse da expressão: %v", err)
+		log.Printf("[DISPATCHER] [%s] Erro ao fazer parse da expressão: %v", clientID, err)
 		return &pb.ExpressionResponse{
 			ExpressionId: req.ExpressionId,
 			Error: &pb.ErrorInfo{
@@ -70,8 +78,8 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		}, nil
 	}
 
-	log.Printf("RPN: %s", rpnStr)
-	log.Printf("Expressão parseada em %d steps", len(steps))
+	log.Printf("[DISPATCHER] [%s] RPN: %s", clientID, rpnStr)
+	log.Printf("[DISPATCHER] [%s] Expressão parseada em %d steps", clientID, len(steps))
 
 	// Executa cada step
 	results := make(map[string]float64)
@@ -102,7 +110,7 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 			DeadlineMs:   req.DeadlineMs,
 		}
 
-		log.Printf("Executando step %d: %s(%v)", i, step.Operation, numbers)
+		log.Printf("[DISPATCHER] [%s] Executando step %d: %s(%v)", clientID, i, step.Operation, numbers)
 
 		// Obtém cliente do servidor de operação
 		client, ok := s.serverClients[step.Operation]
@@ -119,7 +127,7 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		// Executa operação
 		opResp, err := client.Execute(stepCtx, opReq)
 		if err != nil {
-			log.Printf("Erro ao executar step %d: %v", i, err)
+			log.Printf("[DISPATCHER] [%s] Erro ao executar step %d: %v", clientID, i, err)
 			return &pb.ExpressionResponse{
 				ExpressionId: req.ExpressionId,
 				Error: &pb.ErrorInfo{
@@ -130,7 +138,7 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		}
 
 		if opResp.Error != nil {
-			log.Printf("Erro retornado pelo servidor: %s - %s", opResp.Error.Code, opResp.Error.Message)
+			log.Printf("[DISPATCHER] [%s] Erro retornado pelo servidor: %s - %s", clientID, opResp.Error.Code, opResp.Error.Message)
 			return &pb.ExpressionResponse{
 				ExpressionId: req.ExpressionId,
 				Error:        opResp.Error,
@@ -138,11 +146,11 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		}
 
 		results[opReq.StepId] = opResp.Result
-		log.Printf("Step %d completado: resultado = %f", i, opResp.Result)
+		log.Printf("[DISPATCHER] [%s] Step %d completado: resultado = %f", clientID, i, opResp.Result)
 
 		// Se for o último step, retorna o resultado
 		if i == len(steps)-1 {
-			log.Printf("Expressão calculada com sucesso: %f", opResp.Result)
+			log.Printf("[DISPATCHER] [%s] Expressão calculada com sucesso: %f", clientID, opResp.Result)
 			return &pb.ExpressionResponse{
 				ExpressionId: req.ExpressionId,
 				Result:       opResp.Result,
