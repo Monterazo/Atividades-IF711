@@ -12,11 +12,18 @@ type Token struct {
 	Value string
 }
 
+// StepDependency representa uma dependência de um resultado anterior
+type StepDependency struct {
+	Position  int    // Posição no array Numbers (0 ou 1)
+	Reference string // Referência ao resultado (ex: "result_step0")
+}
+
 // Step representa uma operação atômica
 type Step struct {
 	ID        string
 	Operation string
 	Numbers   []float64
+	DependsOn []StepDependency // Dependências de resultados anteriores
 }
 
 // Parser implementa o algoritmo Shunting Yard para converter expressões infix para RPN
@@ -44,6 +51,34 @@ func (p *Parser) Parse(expression string) ([]Step, error) {
 	// Converte RPN em steps
 	steps := p.rpnToSteps(rpn)
 	return steps, nil
+}
+
+// ParseWithRPN converte uma expressão infix em steps e retorna também a string RPN
+func (p *Parser) ParseWithRPN(expression string) ([]Step, string, error) {
+	// Tokeniza a expressão
+	tokens, err := p.tokenize(expression)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Converte para RPN usando Shunting Yard
+	rpn, err := p.toRPN(tokens)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Converte RPN em string para exibição
+	var rpnStr string
+	for i, token := range rpn {
+		if i > 0 {
+			rpnStr += " "
+		}
+		rpnStr += token.Value
+	}
+
+	// Converte RPN em steps
+	steps := p.rpnToSteps(rpn)
+	return steps, rpnStr, nil
 }
 
 // tokenize divide a expressão em tokens
@@ -165,18 +200,38 @@ func (p *Parser) rpnToSteps(rpn []Token) []Step {
 			a := stack[len(stack)-2]
 			stack = stack[:len(stack)-2]
 
-			num1, _ := strconv.ParseFloat(a, 64)
-			num2, _ := strconv.ParseFloat(b, 64)
+			// Tenta converter para número, se falhar mantém como string
+			num1, err1 := strconv.ParseFloat(a, 64)
+			if err1 != nil {
+				num1 = 0 // placeholder, será substituído depois
+			}
+
+			num2, err2 := strconv.ParseFloat(b, 64)
+			if err2 != nil {
+				num2 = 0 // placeholder, será substituído depois
+			}
 
 			operation := p.operatorToOperation(token.Value)
 			stepID := fmt.Sprintf("step%d", stepCounter)
 			stepCounter++
 
-			steps = append(steps, Step{
+			step := Step{
 				ID:        stepID,
 				Operation: operation,
 				Numbers:   []float64{num1, num2},
-			})
+			}
+
+			// Armazena informação sobre dependências
+			if err1 != nil {
+				// a é uma referência a resultado anterior
+				step.DependsOn = append(step.DependsOn, StepDependency{Position: 0, Reference: a})
+			}
+			if err2 != nil {
+				// b é uma referência a resultado anterior
+				step.DependsOn = append(step.DependsOn, StepDependency{Position: 1, Reference: b})
+			}
+
+			steps = append(steps, step)
 
 			// Empilha um placeholder para o resultado
 			stack = append(stack, fmt.Sprintf("result_%s", stepID))

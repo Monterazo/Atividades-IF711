@@ -58,7 +58,7 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 	log.Printf("Recebida expressão: %s (ID: %s)", req.Expression, req.ExpressionId)
 
 	// Parse da expressão
-	steps, err := s.parser.Parse(req.Expression)
+	steps, rpnStr, err := s.parser.ParseWithRPN(req.Expression)
 	if err != nil {
 		log.Printf("Erro ao fazer parse da expressão: %v", err)
 		return &pb.ExpressionResponse{
@@ -70,6 +70,7 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		}, nil
 	}
 
+	log.Printf("RPN: %s", rpnStr)
 	log.Printf("Expressão parseada em %d steps", len(steps))
 
 	// Executa cada step
@@ -78,6 +79,14 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 		// Substitui referências a resultados anteriores
 		numbers := make([]float64, len(step.Numbers))
 		copy(numbers, step.Numbers)
+
+		// Substitui resultados anteriores usando as dependências
+		for _, dep := range step.DependsOn {
+			stepID := fmt.Sprintf("%s_%s", req.ExpressionId, dep.Reference[len("result_"):])
+			if result, ok := results[stepID]; ok {
+				numbers[dep.Position] = result
+			}
+		}
 
 		// Cria contexto com timeout
 		deadline := time.Duration(req.DeadlineMs) * time.Millisecond
@@ -130,14 +139,6 @@ func (s *DispatcherServer) Calculate(ctx context.Context, req *pb.ExpressionRequ
 
 		results[opReq.StepId] = opResp.Result
 		log.Printf("Step %d completado: resultado = %f", i, opResp.Result)
-
-		// Atualiza números para próximos steps se necessário
-		if i < len(steps)-1 {
-			// O resultado atual será usado no próximo step
-			if i+1 < len(steps) {
-				steps[i+1].Numbers[0] = opResp.Result
-			}
-		}
 
 		// Se for o último step, retorna o resultado
 		if i == len(steps)-1 {
