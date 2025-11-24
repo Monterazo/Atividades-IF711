@@ -1,4 +1,4 @@
-.PHONY: proto build build-grpc build-rabbitmq run-servers run-dispatcher run-client clean
+.PHONY: proto build build-grpc build-rabbitmq build-benchmark run-servers run-dispatcher run-client clean benchmark-grpc benchmark-rabbitmq
 
 # Gera código a partir do arquivo .proto
 proto:
@@ -35,6 +35,13 @@ build-rabbitmq:
 	go build -o bin/rabbitmq_dispatcher ./cmd/rabbitmq_dispatcher
 	go build -o bin/rabbitmq_client ./cmd/rabbitmq_client
 	@echo "Compilação RabbitMQ concluída!"
+
+# Compila ferramentas de benchmark
+build-benchmark:
+	@echo "Compilando ferramentas de benchmark..."
+	go build -o bin/grpc_benchmark.exe ./cmd/benchmark/grpc_benchmark.go
+	go build -o bin/rabbitmq_benchmark.exe ./cmd/benchmark/rabbitmq_benchmark.go
+	@echo "Compilação de benchmarks concluída!"
 
 # Executa todos os servidores em background
 run-servers:
@@ -86,3 +93,16 @@ run-all-rabbitmq: build-rabbitmq
 	start /B bin/rabbitmq_dispatcher.exe
 	timeout /t 2 /nobreak > nul
 	bin/rabbitmq_client.exe
+
+# Executa benchmark gRPC
+# Uso: make benchmark-grpc EXPR="((4+3)*2)/5" CLIENTS=10 REQS=100
+benchmark-grpc: build-benchmark
+	@echo "Executando benchmark gRPC..."
+	./bin/grpc_benchmark.exe -expr="$(or $(EXPR),((4+3)*2)/5)" -clients=$(or $(CLIENTS),10) -reqs=$(or $(REQS),100)
+
+# Executa benchmark RabbitMQ
+# Uso: make benchmark-rabbitmq EXPR="((4+3)*2)/5" CLIENTS=10 REQS=100
+benchmark-rabbitmq: build-benchmark
+	@echo "Executando benchmark RabbitMQ..."
+	@echo "IMPORTANTE: Certifique-se de que o RabbitMQ e os servidores estão rodando!"
+	./bin/rabbitmq_benchmark.exe -expr="$(or $(EXPR),((4+3)*2)/5)" -clients=$(or $(CLIENTS),10) -reqs=$(or $(REQS),100)
