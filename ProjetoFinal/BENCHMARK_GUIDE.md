@@ -2,6 +2,22 @@
 
 Este guia explica como usar as ferramentas de benchmark automatizado para testar o desempenho do sistema com múltiplos clientes simultâneos.
 
+## ⚡ Quick Start
+
+### Benchmark gRPC (3 comandos):
+```bash
+./run-grpc.sh                                           # 1. Iniciar servidores
+make benchmark-grpc EXPR="2+2" CLIENTS=5 REQS=50       # 2. Executar benchmark
+./stop-grpc.sh                                          # 3. Parar servidores
+```
+
+### Benchmark RabbitMQ (3 comandos):
+```bash
+./run-rabbitmq.sh                                       # 1. Iniciar servidores
+make benchmark-rabbitmq EXPR="2+2" CLIENTS=5 REQS=50   # 2. Executar benchmark
+./stop-rabbitmq.sh                                      # 3. Parar servidores
+```
+
 ## 🎯 Objetivo
 
 As ferramentas de benchmark permitem:

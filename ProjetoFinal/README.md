@@ -306,20 +306,48 @@ message OperationResponse {
 
 ## 📊 **8. Benchmark e Comparação de Desempenho**
 
-**Métricas a serem coletadas:**
-- Latência total (p50, p95)
-- Throughput (req/s)
-- Uso de memória
-- Uso de CPU
-- Taxa de falhas
-- Impacto de concorrência
+### ⚡ Quick Start - Executar Benchmarks
 
-**Cenários recomendados:**
-- 10.000 expressões simples
-- 5.000 expressões complexas
-- 50 clientes simultâneos
-- Casos de erro (divisão por zero)
-- Testes com latência artificial
+**Benchmark gRPC:**
+```bash
+./run-grpc.sh                                           # Iniciar servidores
+make benchmark-grpc EXPR="((4+3)*2)/5" CLIENTS=10 REQS=100
+./stop-grpc.sh                                          # Parar servidores
+```
+
+**Benchmark RabbitMQ:**
+```bash
+./run-rabbitmq.sh                                       # Iniciar servidores
+make benchmark-rabbitmq EXPR="((4+3)*2)/5" CLIENTS=10 REQS=100
+./stop-rabbitmq.sh                                      # Parar servidores
+```
+
+**Documentação completa:** Ver [BENCHMARK_GUIDE.md](BENCHMARK_GUIDE.md)
+
+### 📈 Métricas Coletadas
+
+Os benchmarks automatizados medem:
+- ✅ Latência (mínima, média, máxima, P50, P95, P99)
+- ✅ Throughput (requisições por segundo)
+- ✅ Taxa de sucesso/falha
+- ✅ Duração total do teste
+- ✅ Comportamento sob carga concorrente
+
+### 🧪 Cenários de Teste Disponíveis
+
+```bash
+# Carga leve
+make benchmark-grpc EXPR="2+2" CLIENTS=5 REQS=50
+
+# Carga média
+make benchmark-grpc EXPR="((4+3)*2)/5" CLIENTS=20 REQS=100
+
+# Carga pesada
+make benchmark-grpc EXPR="((10+5)*3-7)/2" CLIENTS=50 REQS=200
+
+# Teste de erro
+make benchmark-grpc EXPR="10/0" CLIENTS=10 REQS=50
+```
 
 ## 🎯 **9. Conclusão**
 
