@@ -3,6 +3,7 @@ module github.com/Monterazo/Atividades-IF711/ProjetoFinal
 go 1.24.0
 
 require (
+	github.com/rabbitmq/amqp091-go v1.10.0
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 )

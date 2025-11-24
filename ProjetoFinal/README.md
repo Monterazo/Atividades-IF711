@@ -1,11 +1,11 @@
-# 📘 **Arquitetura do Sistema Distribuído – MOM (MQTT) e RPC (gRPC)**
+# 📘 **Arquitetura do Sistema Distribuído – MOM (RabbitMQ) e RPC (gRPC)**
 
 ## 📌 **Visão Geral**
 
 Este projeto implementa dois estilos de comunicação distribuída, seguindo as instruções fornecidas no arquivo especificacao.txt:
 
 **Arquitetura MOM (Message-Oriented Middleware)**
-- Baseada em MQTT
+- Baseada em RabbitMQ ✅ **(IMPLEMENTADO)**
 - Responsável por comunicação assíncrona, baseada em mensagens.
 
 **Arquitetura RPC (Remote Procedure Call)**
@@ -18,14 +18,15 @@ O projeto exige ainda um relatório comparativo de desempenho entre as duas abor
 
 ---
 
-## 🚀 **Quick Start - gRPC**
+## 🚀 **Quick Start**
 
 ### Pré-requisitos
 - Go 1.21+
-- Protocol Buffers Compiler (protoc)
+- **Para gRPC:** Protocol Buffers Compiler (protoc)
+- **Para RabbitMQ:** RabbitMQ Server
 - Git
 
-### Instalação e Execução Rápida
+### Instalação e Execução Rápida - gRPC
 
 ```bash
 # 1. Instalar protoc (Windows - PowerShell como Admin)
@@ -35,16 +36,26 @@ powershell -ExecutionPolicy Bypass -File scripts\install_protoc.ps1
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-# 3. Compilar o projeto
-powershell -ExecutionPolicy Bypass -File scripts\build.ps1
+# 3. Compilar e executar
+make run-all
+```
 
-# 4. Executar o sistema
-powershell -ExecutionPolicy Bypass -File scripts\run.ps1
+### Instalação e Execução Rápida - RabbitMQ
+
+```bash
+# 1. Instalar e iniciar RabbitMQ
+# Windows: choco install rabbitmq && rabbitmq-server
+# Linux: sudo apt install rabbitmq-server && sudo systemctl start rabbitmq-server
+# macOS: brew install rabbitmq && brew services start rabbitmq
+
+# 2. Compilar e executar
+make run-all-rabbitmq
 ```
 
 ### Documentação Detalhada
 - 📖 [SETUP.md](SETUP.md) - Configuração completa do ambiente
-- 📋 [INSTRUCOES.md](INSTRUCOES.md) - Instruções detalhadas de execução
+- 📋 [INSTRUCOES.md](INSTRUCOES.md) - Instruções detalhadas gRPC
+- 🐰 [INSTRUCOES_RABBITMQ.md](INSTRUCOES_RABBITMQ.md) - Instruções detalhadas RabbitMQ
 - 📡 [especificacao.txt](especificacao.txt) - Especificação do projeto
 
 ---
@@ -145,52 +156,52 @@ Cada servidor implementa apenas UMA operação:
 
 Dispatcher coordena exatamente estes passos.
 
-## 📡 **4. Arquitetura MOM (MQTT)**
+## 📡 **4. Arquitetura MOM (RabbitMQ)**
 
 ### 📊 **4.1 Diagrama**
 ```
 Cliente
    │
    ▼
-[MQTT Broker] ←→ Dispatcher ←→ Servidores (Add/Sub/Mult/Div)
+[RabbitMQ Broker] ←→ Dispatcher ←→ Servidores (Add/Sub/Mult/Div)
 ```
 
-### 📚 **4.2 Tópicos MQTT (Padronizados)**
+### 📚 **4.2 Filas RabbitMQ (Padronizadas)**
 
 **Requests:**
-- `calculator/requests`
+- `calculator.requests`
 
 **Responses:**
-- `calculator/responses`
+- `calculator.responses`
 
 **Operações:**
-- `operations/add`
-- `operations/subtract`
-- `operations/multiply`
-- `operations/divide`
+- `operations.add`
+- `operations.subtract`
+- `operations.multiply`
+- `operations.divide`
 
 **Resultados dos servidores:**
-- `operations/results`
+- `operations.results`
 
-### 🔁 **4.3 Fluxo de Execução MQTT**
+### 🔁 **4.3 Fluxo de Execução RabbitMQ**
 
-1. Cliente → `calculator/requests`.
+1. Cliente → `calculator.requests`.
 2. Dispatcher consome, faz parsing.
 3. Para cada step:
-   - Publica OperationRequest no tópico correto (operations/add, etc.).
+   - Publica OperationRequest na fila correta (operations.add, etc.).
 4. Servidor especializado:
    - Processa
-   - Publica em `operations/results`.
+   - Publica em `operations.results`.
 5. Dispatcher coleta, ordena e monta o resultado final.
-6. Publica resultado em `calculator/responses`.
+6. Publica resultado em `calculator.responses`.
 
-### 🛠 **Melhorias aplicadas à arquitetura original**
+### 🛠 **Melhorias aplicadas à arquitetura**
 
-- ✔ Removido conceito de Connection Pool MQTT (não necessário)
+- ✔ Utilizado RabbitMQ como broker MOM
 - ✔ Padronizado JSON como serialização oficial
-- ✔ Mantido MessagePack como opcional
 - ✔ Estruturados IDs (expressionId, stepId)
-- ✔ Separado core da implementação MQTT
+- ✔ Separado core da implementação RabbitMQ
+- ✔ Filas duráveis para garantir persistência de mensagens
 - ✔ Documentação revisada e padronizada
 
 ## ⚡ **5. Arquitetura RPC (gRPC)**
@@ -267,33 +278,30 @@ message OperationResponse {
 4. **Se tudo der certo:**
    - Dispatcher monta o resultado final e retorna ao cliente.
 
-## 🏛 **7. Estrutura de Pastas Recomendada**
+## 🏛 **7. Estrutura de Pastas Implementada**
 ```
-/calculator-distributed
+/ProjetoFinal
 │
 ├── cmd/
-│   ├── mqtt_dispatcher/
-│   ├── mqtt_add_server/
-│   ├── mqtt_sub_server/
-│   ├── mqtt_mult_server/
-│   ├── mqtt_div_server/
-│   ├── mqtt_client/
-│   ├── grpc_dispatcher/
-│   ├── grpc_add_server/
-│   ├── grpc_sub_server/
-│   ├── grpc_mult_server/
-│   ├── grpc_div_server/
-│   └── grpc_client/
+│   ├── rabbitmq_dispatcher/    ✅ IMPLEMENTADO
+│   ├── rabbitmq_add_server/    ✅ IMPLEMENTADO
+│   ├── rabbitmq_sub_server/    ✅ IMPLEMENTADO
+│   ├── rabbitmq_mult_server/   ✅ IMPLEMENTADO
+│   ├── rabbitmq_div_server/    ✅ IMPLEMENTADO
+│   ├── rabbitmq_client/        ✅ IMPLEMENTADO
+│   ├── grpc_dispatcher/        ✅ IMPLEMENTADO
+│   ├── grpc_add_server/        ✅ IMPLEMENTADO
+│   ├── grpc_sub_server/        ✅ IMPLEMENTADO
+│   ├── grpc_mult_server/       ✅ IMPLEMENTADO
+│   ├── grpc_div_server/        ✅ IMPLEMENTADO
+│   └── grpc_client/            ✅ IMPLEMENTADO
 │
 ├── internal/
-│   ├── core/        # Parsing, modelos e regras comuns
-│   ├── mqtt/        # Implementação MQTT
-│   └── grpc/        # Implementação gRPC
+│   ├── core/        # Parsing, modelos e regras comuns ✅
+│   ├── rabbitmq/    # Implementação RabbitMQ ✅
+│   └── grpc/        # Implementação gRPC ✅
 │
-└── bench/
-    ├── benchmark_mqtt.go
-    ├── benchmark_grpc.go
-    └── results.md
+└── proto/           # Definições Protocol Buffers ✅
 ```
 
 ## 📊 **8. Benchmark e Comparação de Desempenho**
@@ -315,11 +323,25 @@ message OperationResponse {
 
 ## 🎯 **9. Conclusão**
 
-Este documento unifica:
+Este documento e implementação unificam:
 
-- ✔ A especificação oficial
-- ✔ A arquitetura MOM do colega (corrigida)
-- ✔ A arquitetura RPC gRPC (padronizada)
-- ✔ As boas práticas da disciplina
-- ✔ Uma estrutura de repositório profissional
+- ✔ A especificação oficial do projeto
+- ✔ A arquitetura MOM com RabbitMQ (IMPLEMENTADA)
+- ✔ A arquitetura RPC com gRPC (IMPLEMENTADA)
+- ✔ Código compartilhado no pacote `internal/core`
+- ✔ Duas implementações completas e funcionais
+- ✔ Documentação detalhada para ambas as abordagens
+- ✔ Scripts de build e execução automatizados
+- ✔ Pronto para testes de benchmark e comparação de desempenho
 - ✔ Pronto para apresentação, entrega e avaliação
+
+---
+
+## 🚀 **Próximos Passos Recomendados**
+
+1. **Executar ambas as implementações** para validar funcionamento
+2. **Implementar benchmarks** para comparar desempenho
+3. **Coletar métricas** de latência, throughput, uso de CPU/memória
+4. **Criar relatório comparativo** entre MOM e RPC
+5. **Testar cenários de falha** e recuperação
+6. **Documentar observações** e lições aprendidas

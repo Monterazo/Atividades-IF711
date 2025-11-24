@@ -1,4 +1,4 @@
-.PHONY: proto build run-servers run-dispatcher run-client clean
+.PHONY: proto build build-grpc build-rabbitmq run-servers run-dispatcher run-client clean
 
 # Gera código a partir do arquivo .proto
 proto:
@@ -11,16 +11,30 @@ deps:
 	go mod download
 	go mod tidy
 
-# Compila todos os binários
-build: proto
-	@echo "Compilando servidores..."
+# Compila todos os binários (gRPC e RabbitMQ)
+build: build-grpc build-rabbitmq
+
+# Compila binários gRPC
+build-grpc: proto
+	@echo "Compilando servidores gRPC..."
 	go build -o bin/grpc_add_server ./cmd/grpc_add_server
 	go build -o bin/grpc_sub_server ./cmd/grpc_sub_server
 	go build -o bin/grpc_mult_server ./cmd/grpc_mult_server
 	go build -o bin/grpc_div_server ./cmd/grpc_div_server
 	go build -o bin/grpc_dispatcher ./cmd/grpc_dispatcher
 	go build -o bin/grpc_client ./cmd/grpc_client
-	@echo "Compilação concluída!"
+	@echo "Compilação gRPC concluída!"
+
+# Compila binários RabbitMQ
+build-rabbitmq:
+	@echo "Compilando servidores RabbitMQ..."
+	go build -o bin/rabbitmq_add_server ./cmd/rabbitmq_add_server
+	go build -o bin/rabbitmq_sub_server ./cmd/rabbitmq_sub_server
+	go build -o bin/rabbitmq_mult_server ./cmd/rabbitmq_mult_server
+	go build -o bin/rabbitmq_div_server ./cmd/rabbitmq_div_server
+	go build -o bin/rabbitmq_dispatcher ./cmd/rabbitmq_dispatcher
+	go build -o bin/rabbitmq_client ./cmd/rabbitmq_client
+	@echo "Compilação RabbitMQ concluída!"
 
 # Executa todos os servidores em background
 run-servers:
@@ -46,9 +60,9 @@ clean:
 	rm -rf bin/
 	@echo "Binários removidos!"
 
-# Executa tudo (servidores + dispatcher + client)
-run-all: build
-	@echo "Iniciando todos os componentes..."
+# Executa tudo gRPC (servidores + dispatcher + client)
+run-all: build-grpc
+	@echo "Iniciando todos os componentes gRPC..."
 	@echo "Pressione Ctrl+C para encerrar"
 	start /B bin/grpc_add_server.exe
 	start /B bin/grpc_sub_server.exe
@@ -58,3 +72,17 @@ run-all: build
 	start /B bin/grpc_dispatcher.exe
 	timeout /t 2 /nobreak > nul
 	bin/grpc_client.exe
+
+# Executa tudo RabbitMQ (servidores + dispatcher + client)
+run-all-rabbitmq: build-rabbitmq
+	@echo "Iniciando todos os componentes RabbitMQ..."
+	@echo "IMPORTANTE: Certifique-se de que o RabbitMQ está rodando!"
+	@echo "Pressione Ctrl+C para encerrar"
+	start /B bin/rabbitmq_add_server.exe
+	start /B bin/rabbitmq_sub_server.exe
+	start /B bin/rabbitmq_mult_server.exe
+	start /B bin/rabbitmq_div_server.exe
+	timeout /t 2 /nobreak > nul
+	start /B bin/rabbitmq_dispatcher.exe
+	timeout /t 2 /nobreak > nul
+	bin/rabbitmq_client.exe
